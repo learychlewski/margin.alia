@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>margin.alia</title>
+  <link rel="icon" type="image/svg+xml" href="asterisque.svg">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     LANDING
+═══════════════════════════════════════ -->
+<div id="landing" class="landing-screen">
+
+  <div id="landing-canvas">
+    <div id="lc-title">
+      <div class="lc-blur-wrap">
+        <span class="lc-blurred" aria-hidden="true">[</span>
+        <span class="lc-sharp">[</span>
+      </div>
+      <div id="lc-title-blur-wrap">
+        <span class="lc-title-blurred" aria-hidden="true">margin.alia</span>
+        <span class="lc-title-sharp">margin.alia</span>
+      </div>
+      <div class="lc-blur-wrap">
+        <span class="lc-blurred" aria-hidden="true">]</span>
+        <span class="lc-sharp">]</span>
+      </div>
+    </div>
+    <div id="lc-bar-title"></div>
+
+    <div id="lc-text-tab" class="lc-text-tab" onclick="openAboutTab(event)">
+      <span class="lc-text-tab-label"></span>
+      <div class="lc-text-tab-content">
+        <div id="lc-text-postit-body">
+          <p class="lc-col-p">Lire laisse des traces. Dans les marges des livres, dans les pages cornées, dans les phrases soulignées que personne d'autre ne verra jamais, une activité s'est déposée, intense, subjective, et ordinairement invisible. Cette activité a pourtant une histoire longue&#8239;: les marginalia des manuscrits médiévaux en témoignent, tout comme les annotations savantes qui bordent les textes critiques. La marge n'est pas un espace résiduel. Elle est le lieu où le.la lecteur.ice prend position. C'est dans cet espace que la lecture cesse d'être réception pour devenir interprétation, que le sens se négocie entre le texte et celui ou celle qui le traverse.</p>
+          <p class="lc-col-p">Cette interface est née d'un projet de recherche consacré aux pratiques de lecture sur BookTok, où une communauté majoritairement féminine a transformé la médiation littéraire en produisant, autour des textes, un espace de réaction collective et d'appropriation subjective. Ce que ces lectrices font dans la marge de leurs livres ou dans leurs vidéos, Barthes l'avait formulé dès 1968&#8239;: le texte est «&#8239;un espace à dimensions multiples où se marient et se contestent des écritures variées, dont aucune n'est originelle&#8239;». La lecture y est production autant que réception, et le.la lecteur.ice en est le véritable foyer de sens.</p>
+          <p class="lc-col-p">Ces productions peuvent être mises en commun, confrontées, rendues visibles. Chartier rappelle dans <em>Pratiques de la lecture</em> que lire a toujours été une pratique collective, inscrite dans des communautés qui partagent des manières de faire signifier un texte. <span class="highlight-yellow">margin.alia</span> part de ce constat pour en faire une réponse formelle&#8239;: l'interface traduit les annotations de ses lecteur.ices en transformations typographiques et fait du texte un palimpseste où plusieurs voix coexistent simultanément, déplaçant l'autorité de l'auteur vers celles et ceux qui le lisent.</p>
+        </div>
+      </div>
+    </div>
+
+    <img src="fleche.svg"               id="lc-fleche"  alt="">
+    <img src="soulignement_accueil.svg" id="lc-soulign" alt="">
+    <img src="entoureaccueil.svg"       id="lc-entour"  alt="">
+    <img src="soleil.svg"               id="lc-soleil"  alt="">
+    <div id="lc-bar-mid"></div>
+
+    <label id="lc-cta">
+      <span class="cta-importer lc-blur-wrap"><span class="lc-blurred" aria-hidden="true">importer</span><span class="lc-sharp">importer</span></span> un texte à annoter
+      <input type="file" accept=".txt" onchange="landingImport(this)" style="display:none">
+    </label>
+  </div>
+
+  <!-- Setup overlay — apparaît par-dessus le canvas, pas de scroll -->
+  <div id="lc-setup" class="hidden">
+    <div id="lc-setup-inner">
+      <div id="lc-titre-texte">
+        <div class="lc-soulign-wrap">
+          <input class="lc-input-hidden" id="doc-title"
+                 placeholder="titre du texte" autocomplete="off">
+          <img src="soulignement_accueil.svg" class="soulign-svg" alt="">
+        </div>
+        <div class="lc-soulign-wrap">
+          <input class="lc-input-hidden" id="doc-author"
+                 placeholder="auteur" autocomplete="off">
+          <img src="soulignement_accueil.svg" class="soulign-svg" alt="">
+        </div>
+      </div>
+
+      <div id="lc-footer">
+        <img src="fleche2.svg" class="lc-arrow-small" alt="">
+        <div id="lc-commencer-wrap">
+          <button id="lc-commencer" onclick="startReading()">
+            <span class="lc-blur-wrap lc-commencer-blur">
+              <span class="lc-blurred" aria-hidden="true">commencer</span>
+              <span class="lc-sharp">commencer</span>
+            </span>
+          </button>
+        </div>
+        <img src="fleche2.svg" class="lc-arrow-small lc-arrow-r" alt="">
+      </div>
+    </div>
+  </div>
+
+  <textarea id="text-input" style="display:none"></textarea>
+
+  <!-- Colophon — bas droite -->
+  <button id="colophon-btn" class="colophon-toggle" type="button"
+          onmousedown="event.stopPropagation()"
+          onclick="event.stopPropagation(); toggleColophonPostit(event);"
+          aria-label="colophon">
+    <span class="colophon-c">©</span>
+  </button>
+  <div id="colophon-postit" class="postit hidden"
+       onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <div class="postit-title"><span class="postit-title-inner"><span class="postit-title-blurred" aria-hidden="true">colophon</span><span class="postit-title-sharp">colophon</span></span></div>
+    <div class="colophon-body">
+      <p>Conception graphique et développement web par Léa Rychlewski</p>
+      <p>Caractères typographiques&#8239;: ABC Arizona par Elias Hanzer<br>et Alex Lescieux (Dinamo), <span class="colophon-migra">Migra ExtraLight</span> par Valerio Monopoli (Pangram&#8239;Pangram Foundry)</p>
+      <p>Projet réalisé dans le cadre du DSNEP, ESAD Amiens, 2026</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     PHASE LECTURE
+═══════════════════════════════════════ -->
+<div id="phase-lecture" class="phase hidden">
+  <div id="reading-zone">
+    <div id="text-outer">
+
+      <!-- Titre haut gauche -->
+      <div id="reading-title">
+        <div id="reading-title-main">
+          <span class="rt-bracket"><span class="lc-blurred" aria-hidden="true">[</span><span class="lc-sharp">[</span></span>
+          <div id="reading-title-blur-wrap">
+            <span class="rt-blurred" id="rt-blurred-text" aria-hidden="true"></span>
+            <span class="rt-sharp" id="rt-sharp-text"></span>
+          </div>
+          <span class="rt-bracket"><span class="lc-blurred" aria-hidden="true">]</span><span class="lc-sharp">]</span></span>
+        </div>
+        <div id="reading-title-author-wrap">
+          <span class="rt-blurred" id="rt-author-blurred" aria-hidden="true"></span>
+          <span class="rt-sharp" id="rt-author-sharp"></span>
+        </div>
+      </div>
+
+      <div id="margin-col">
+        <div id="icons-bar">
+          <button class="margin-icon-btn margin-icon-menu"
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation(); toggleMenuPostit(event);">
+            <img src="asterisque.svg" alt="menu">
+          </button>
+          <button class="margin-icon-btn margin-icon-liste"
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation(); toggleListePostit(event);">
+            <img src="liste.svg" alt="liste">
+          </button>
+          <button class="margin-icon-btn margin-icon-filtre"
+                  onmousedown="event.stopPropagation()"
+                  onclick="event.stopPropagation(); toggleFiltrePostit(event);">
+            <img src="filtre.svg" alt="filtrer">
+          </button>
+        </div>
+      </div>
+
+      <div id="text-display"></div>
+
+      <!-- Rail thèmes — postits à droite du texte, n'impacte pas la lisibilité des annotations en marge gauche -->
+      <div id="theme-rail-right"></div>
+    </div>
+  </div>
+
+  <!-- Overlay thèmes — par-dessus le texte -->
+  <div id="themes-overlay" class="hidden" style="pointer-events:auto;">
+    <div id="themes-tiles-container"></div>
+    <div id="themes-empty" class="themes-empty hidden">
+      <span>aucun thème créé</span>
+    </div>
+  </div>
+
+  <!-- Post-it MENU -->
+  <div id="menu-postit" class="postit hidden"
+       onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <div class="postit-title"><span class="postit-title-inner"><span class="postit-title-blurred" aria-hidden="true">Menu</span><span class="postit-title-sharp">Menu</span></span></div>
+    <div id="menu-profiles-list"></div>
+    <div class="postit-divider"></div>
+    <label class="postit-item">
+      importer annotations
+      <input type="file" accept=".json"
+             onchange="handleJsonImportLive(this);"
+             style="display:none">
+    </label>
+    <button class="postit-item" onclick="exportAnnotationsJSONQuick()">exporter annotations</button>
+    <div class="postit-divider"></div>
+    <button class="postit-item" style="opacity:.2;margin-top:4px"
+            onclick="resetAll()">recommencer</button>
+  </div>
+
+  <!-- Post-it FILTRE -->
+  <div id="filtre-postit" class="postit hidden"
+       onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <div class="postit-title"><span class="postit-title-inner"><span class="postit-title-blurred" aria-hidden="true">Filtrer</span><span class="postit-title-sharp">Filtrer</span></span></div>
+    <div id="filtre-profiles-list"></div>
+  </div>
+  <!-- Post-it LISTE ANNOTATIONS -->
+  <div id="liste-postit" class="postit hidden"
+       onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+    <div class="postit-title"><span class="postit-title-inner"><span class="postit-title-blurred" aria-hidden="true">Annotations</span><span class="postit-title-sharp">Annotations</span></span></div>
+    <div id="liste-annotations-content"></div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     POPUP ANNOTATION
+═══════════════════════════════════════ -->
+<div id="popup-overlay" class="hidden" onclick="cancelAnnot()"></div>
+
+<div id="annot-popup" class="hidden">
+  <div class="ap-title"><span class="ap-title-inner"><span class="ap-title-blurred" aria-hidden="true">Annotation</span><span class="ap-title-sharp">Annotation</span></span></div>
+
+  <div class="popup-passage" id="popup-passage"></div>
+  <div class="popup-link-row">
+    <span class="popup-link-count" id="popup-link-count"></span>
+    <button class="popup-link-btn" onclick="enterLinkingMode()">+ lier à d'autres passages</button>
+  </div>
+
+  <div class="popup-divider"></div>
+
+  <div class="popup-section">
+    <div class="ap-section-label" data-label="Type de trace"><span>Type de trace</span></div>
+    <div class="trace-btns">
+      <button class="trace-btn active" data-trace="evidence" onclick="selectTrace(this)">soulignement</button>
+      <button class="trace-btn"        data-trace="entoure"  onclick="selectTrace(this)">surlignement</button>
+      <button class="trace-btn"        data-trace="note"     onclick="selectTrace(this)">entouré</button>
+      <button class="trace-btn"        data-trace="crochet"  onclick="selectTrace(this)">crochet</button>
+    </div>
+  </div>
+
+  <div class="ap-textarea-wrap">
+    <img src="sélectiontexte.svg" class="ap-textarea-svgbg" alt="">
+    <textarea class="popup-textarea-flat" id="popup-note"
+              rows="3" placeholder="note associée…"
+              oninput="onPopupNoteInput()"></textarea>
+  </div>
+
+  <div id="popup-note-extras" class="hidden">
+    <div class="popup-section popup-dialogue-row">
+      <label class="popup-dialogue-label">
+        <span data-label="Dialogue"><span>Dialogue</span></span>
+        <input type="checkbox" id="popup-dialogue-check" onchange="onDialogueCheck()">
+      </label>
+    </div>
+    <div class="popup-section" style="margin-top:0;">
+      <div class="ap-section-label" data-label="Posture"><span>Posture</span></div>
+      <div class="posture-row">
+        <span class="posture-label">analytique</span>
+        <input type="range" id="posture-slider" min="0" max="100" value="50"
+               oninput="currentPosture=parseInt(this.value);updatePostureLabels(this.value)">
+        <span class="posture-label">personnelle</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-section popup-theme-section">
+    <div class="ap-section-label" data-label="Thème"><span>Thème</span></div>
+    <div class="theme-selector" id="theme-selector">
+      <button class="theme-add-btn" onclick="openThemePanel()">+ ajouter un thème</button>
+      <div id="theme-selected-display"></div>
+      <div id="theme-panel" class="theme-panel hidden">
+        <div id="theme-existing-list"></div>
+        <div class="theme-create-row">
+          <input type="color" id="theme-new-color" class="theme-color-picker" value="#F7323F">
+          <input class="theme-create-input" id="theme-new-name" placeholder="nouveau thème…" autocomplete="off">
+          <button class="theme-create-btn" onclick="createAndSelectTheme()">créer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup-actions">
+    <button class="btn-cancel-flat" onclick="cancelAnnot()">annuler</button>
+    <button class="btn-confirm"     onclick="confirmAnnot()"><img src="flechedroite.svg" alt="→"></button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     POPUP PENSÉE FLOTTANTE
+═══════════════════════════════════════ -->
+<div id="thought-popup" class="hidden">
+  <div class="ap-title"><span class="ap-title-inner"><span class="ap-title-blurred" aria-hidden="true">pensée flottante</span><span class="ap-title-sharp">pensée flottante</span></span></div>
+  <div class="ap-textarea-wrap">
+    <img src="sélectiontexte.svg" class="ap-textarea-svgbg" alt="">
+    <textarea class="popup-textarea-flat" id="thought-text" rows="3"
+              placeholder="une pensée…" oninput="onThoughtNoteInput()"></textarea>
+  </div>
+  <div id="thought-note-extras" class="hidden">
+    <div class="popup-section popup-dialogue-row">
+      <label class="popup-dialogue-label">
+        <span data-label="Dialogue"><span>Dialogue</span></span>
+        <input type="checkbox" id="thought-dialogue-check" onchange="onThoughtDialogueCheck()">
+      </label>
+    </div>
+    <div class="popup-section" style="margin-top:6px;">
+      <div class="ap-section-label" data-label="Posture"><span>Posture</span></div>
+      <div class="posture-row">
+        <span class="posture-label thought-posture-label">analytique</span>
+        <input type="range" id="thought-posture-slider" min="0" max="100" value="50"
+               oninput="thoughtPosture=parseInt(this.value);updateThoughtPostureLabels(this.value)">
+        <span class="posture-label thought-posture-label">personnelle</span>
+      </div>
+    </div>
+  </div>
+  <div class="popup-actions">
+    <button class="btn-cancel-flat" onclick="cancelThought()">annuler</button>
+    <button class="btn-confirm"     onclick="confirmThought()"><img src="flechedroite.svg" alt="→"></button>
+  </div>
+</div>
+
+
+
+</body>
+</html>
