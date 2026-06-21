@@ -2579,11 +2579,7 @@ body.edition-mode #thought-popup {
 .edition-title-page h1 { font-size:28pt; font-weight:200; margin:0 0 6pt 0; }
 .edition-title-page .edition-author { font-size:14pt; font-weight:200; opacity:.7; }
 
-/* Note en marge — positionnée en absolu, alignée verticalement
-   sur la ligne du passage annoté correspondant en page de droite.
-   La page de notes a le même padding-top que la page de texte,
-   donc les coordonnées top calculées en JS (relatives à la zone
-   de texte) correspondent directement. */
+
 .edition-note {
   position:absolute; left:0; right:0;
   font-family: Arizona, ArizonaSerif, Georgia, serif;
