@@ -4785,7 +4785,12 @@ function _buildListeAnnotationsTab(container) {
         && _postureMatch(a);
   });
 
-  if (!visible.length) {
+  var visibleThoughts = floatingThoughts.filter(function(t) {
+    if (_listeProfileFilter !== null && parseInt(t.profile || 0) !== _listeProfileFilter) return false;
+    return true;
+  });
+
+  if (!visible.length && !visibleThoughts.length) {
     var empty = document.createElement('div');
     empty.className = 'liste-annot-empty';
     empty.textContent = 'aucune annotation';
@@ -4793,6 +4798,7 @@ function _buildListeAnnotationsTab(container) {
     return;
   }
 
+  if (visible.length) {
   visible.sort(function(a, b) {
     var ia = parseInt((a.spanIds[0]||'w0').slice(1));
     var ib = parseInt((b.spanIds[0]||'w0').slice(1));
@@ -4912,12 +4918,9 @@ function _buildListeAnnotationsTab(container) {
   });
 
   container.appendChild(wrap);
+  } // end if (visible.length)
 
   // ── Pensées flottantes ──
-  var visibleThoughts = floatingThoughts.filter(function(t) {
-    if (_listeProfileFilter !== null && parseInt(t.profile || 0) !== _listeProfileFilter) return false;
-    return true;
-  });
   if (visibleThoughts.length) {
     var sep = document.createElement('div');
     sep.style.cssText = 'padding:12px 24px 4px;font-family:var(--f-display);font-weight:200;font-size:13px;letter-spacing:0.02em;color:rgba(12,12,10,0.5);';
@@ -4936,7 +4939,8 @@ function _buildListeAnnotationsTab(container) {
       item.style.position = 'relative';
       item.style.paddingRight = '28px';
       item.onclick = function() {
-        openEditThought(t.id);
+        var tdiv = document.querySelector('.floating-thought[data-id="' + t.id + '"]');
+        if (tdiv) tdiv.scrollIntoView({ behavior:'smooth', block:'center' });
         document.getElementById('liste-postit').classList.add('hidden');
       };
 
@@ -4946,11 +4950,7 @@ function _buildListeAnnotationsTab(container) {
       nm2.className = 'liste-annot-name';
       nm2.style.color = tcol;
       nm2.textContent = pname;
-      var traceTag = document.createElement('span');
-      traceTag.className = 'liste-annot-trace';
-      traceTag.textContent = t.dialogue ? 'dialogue flottant' : 'pensée flottante';
       profRow2.appendChild(nm2);
-      profRow2.appendChild(traceTag);
 
       var noteEl2 = document.createElement('div');
       noteEl2.className = 'liste-annot-note';
