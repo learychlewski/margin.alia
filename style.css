@@ -1,8 +1,4 @@
-/* ═══════════════════════════════════════════════════════
-   HABITER LA MARGE
-   Design éditorial — système de colonnes 12pt
-   Polices : Migra · Arizona · PPNeueMontreal
-═══════════════════════════════════════════════════════ */
+
 
 /* ── FONTS ─────────────────────────────────────────── */
 @font-face { font-family:'Migra'; src:url('Migra-Extralight.woff2') format('woff2'),url('Migra-Extralight.woff') format('woff'),url('Migra-Extralight.otf') format('opentype'); font-weight:200; font-style:normal; }
@@ -15,11 +11,7 @@
 @font-face { font-family:'ArizonaSerif'; src:url('ArizonaSerif.woff') format('woff'); font-weight:100 900; }
 @font-face { font-family:'ArizonaSans'; src:url('ArizonaSans.woff') format('woff'); font-weight:100 900; }
 @font-face { font-family:'Arizona'; src:url('ABCArizonaSuperfamilyVariable-Trial.woff') format('woff'); font-weight:200 700; font-style:normal; }
-@font-face { font-family:'PPNeueMontreal'; src:url('PPNeueMontreal-Thin.otf') format('opentype'); font-weight:100; }
-@font-face { font-family:'PPNeueMontreal'; src:url('PPNeueMontreal-Book.otf') format('opentype'); font-weight:400; }
-@font-face { font-family:'PPNeueMontreal'; src:url('PPNeueMontreal-Medium.otf') format('opentype'); font-weight:500; }
-@font-face { font-family:'PPNeueMontreal'; src:url('PPNeueMontreal-Bold.otf') format('opentype'); font-weight:700; }
-@font-face { font-family:'PPNeueMontreal'; src:url('PPNeueMontreal-Italic.otf') format('opentype'); font-weight:400; font-style:italic; }
+
 
 /* ── DESIGN TOKENS ─────────────────────────────────── */
 :root {
@@ -58,8 +50,8 @@
   --u10: 80px;
 
   /* Largeur colonne texte fixe */
-  --col-text: 50vw;
-  --col-margin: min(50vw, 620px);
+  --col-text: calc(50% - 22px);
+  --col-margin: 50%;
 
   /* Topbar */
   --topbar-h: 36px;
@@ -96,7 +88,6 @@ body {
   overflow:hidden;
 }
 
-/* — Hero — */
 #landing-canvas {
   position:absolute; inset:0;
   overflow:hidden; background: var(--surface);
@@ -251,8 +242,13 @@ body {
   color: #FB9F00;
 }
 
-/* Éléments décoratifs */
-#lc-fleche  { position:absolute; left:17%; top:38%; width:12%; z-index:3; pointer-events:none; }
+/* Éléments décoratifs — la taille plafonne au-delà d'une largeur de
+   référence d'~1800px (là où le titre/CTA plafonnent déjà via clamp()),
+   pour ne plus grossir plus vite que le texte sur les très grands écrans.
+   La position (left/top en %) reste relative au viewport entier : la
+   composition continue de couvrir tout l'écran, sans bande vide sur les
+   côtés. */
+#lc-fleche  { position:absolute; left:17%; top:38%; width:min(12vw, 216px); z-index:3; pointer-events:none; }
 #lc-bar-mid {
   position:absolute; left:0; right:0; bottom:0; height:22%;
   background: linear-gradient(180deg, transparent 0%, var(--yellow) 60%);
@@ -275,18 +271,19 @@ body {
 #lc-soulign {
   position:absolute; left:50%; top:63.5%;
   transform:translateX(-50%) rotate(-4.49deg);
-  width:42%; z-index:2; pointer-events:none;
+  width:min(42vw, 756px); z-index:2; pointer-events:none;
 }
 #lc-entour {
   position:absolute; left:50%; top:63%;
   transform:translateX(-60%);
-  width:26%; z-index:2; pointer-events:none;
+  width:min(26vw, 468px); z-index:2; pointer-events:none;
 }
 #lc-soleil {
   position:absolute; left:67%; top:61%;
-  width:8.5%; transform:rotate(31deg);
+  width:min(8.5vw, 153px); transform:rotate(31deg);
   z-index:2; pointer-events:none;
 }
+
 
 
 /* ── TITRE HAUT GAUCHE — phase lecture ── */
@@ -529,7 +526,7 @@ body {
 
 #text-outer {
   width:100%; min-height:100%;
-  display:flex; position:relative;
+  display:flex; justify-content:flex-end; position:relative;
 }
 
 /* — Marge gauche — */
@@ -554,7 +551,8 @@ body {
 .margin-icon-btn img   { width:28px; height:auto; display:block; }
 .margin-icon-btn svg   { width:28px; height:28px; display:block; }
 
-/* Icons cluster — bottom left, horizontal row */
+/* Icons cluster — bottom left, horizontal row. Ferré au coin réel de
+   l'écran, indépendamment de la colonne de lecture (cf. #text-outer). */
 #icons-bar {
   position:fixed; bottom:20px; left:20px;
   display:flex; flex-direction:row; align-items:center; gap:20px;
@@ -590,15 +588,18 @@ body {
 }
 
 /* — Colonne texte — */
+/* Toujours la moitié de la largeur disponible (calc(50% - 22px), le rail
+   thèmes prenant les 22px restants), comme #margin-col à 50% — texte et
+   notes se partagent l'écran à parts égales, sans plafond, à toute
+   largeur. justify-content:flex-end sur #text-outer colle l'ensemble à
+   droite, contre #theme-rail-right. */
 #text-display {
-  flex:1; position:relative;
+  width: var(--col-text); position:relative;
   font-family: var(--f-serif);
   font-size: 19.5px; line-height:1.58;
   color: var(--ink); font-weight:400;
   text-align: justify;
   padding: var(--u6) var(--u4) var(--u10) var(--u2);
-  max-width: 820px;
-  margin: 0 0 0 auto;
 }
 #text-display p           { margin-bottom:1.45em; }
 /* Dialogue inserts break justify spacing — reset last line */
@@ -776,9 +777,9 @@ span.sel-linked {
 }
 
 /* Position des post-its — ouvrent vers le haut depuis le bas-gauche */
-#menu-postit   { bottom:68px; left:20px; right:auto; top:auto; width:264px; }
-#filtre-postit { bottom:68px; left:20px; right:auto; width:244px; }
-#liste-postit  { bottom:68px; left:20px; right:auto; top:auto; width:420px; max-width: calc(50vw - 40px); max-height:80vh; overflow-y:auto; }
+#menu-postit   { bottom:68px; left:20px; right:auto; top:auto; width: 264px; }
+#filtre-postit { bottom:68px; left:20px; right:auto; width: 360px; }
+#liste-postit  { bottom:68px; left:20px; right:auto; top:auto; width: 420px; max-width: calc(50vw - 40px); max-height:80vh; overflow-y:auto; }
 
 /* Colophon — bas droite de la page d'accueil, ouvre vers le haut */
 #colophon-postit { bottom:92px; right:20px; left:auto; top:auto; width:600px; max-width: calc(100vw - 40px); }
@@ -910,7 +911,7 @@ span.sel-linked {
 }
 .liste-theme-action {
   background:none; border:none; cursor:pointer;
-  font-size:14px; line-height:1; padding:4px 6px;
+  font-size: 14px; line-height:1; padding:4px 6px;
   color:rgba(12,12,10,0.35);
   border-radius:4px;
   transition: color .12s, background .12s;
@@ -989,7 +990,7 @@ span.sel-linked {
 .ap-title {
   position: relative;
   font-family: var(--f-display); font-weight:200;
-  font-size: clamp(22px, 2.8vw, 36px);
+  font-size: 36px;
   letter-spacing: -0.025em; line-height: 1;
   color: var(--ink);
   padding: 22px 32px 20px;
@@ -1858,8 +1859,6 @@ span.sel-linked {
 
 /* ── Filtre — plus large, contenu organisé ── */
 #filtre-postit {
-  min-width: 360px;
-  max-width: 420px;
   max-height: calc(100vh - 32px);
   overflow-y: auto;
 }
@@ -1948,7 +1947,7 @@ span.sel-linked {
 /* Unified label font across popups */
 .ap-section-label,
 .popup-dialogue-label > span {
-  font-size: clamp(14px, 1.4vw, 18px);
+  font-size: 18px;
 }
 
 /* ── 3. LANDING — CTA ── */
@@ -1961,7 +1960,7 @@ span.sel-linked {
 
 #lc-soulign {
   top: 72.5%;
-  width: 42%;
+  width: min(42vw, 756px);
 }
 
 /* entour SVG — sur le mot "texte" */
@@ -1970,7 +1969,7 @@ span.sel-linked {
   left: 50%;
   top: 63%;
   transform: translateX(-50%);
-  width: 15%;
+  width: min(15vw, 270px);
   pointer-events: none;
   z-index: 5;
 }
@@ -2271,7 +2270,7 @@ body.capture-rendering .margin-icon-btn {
 
   #margin-col { width: 0; overflow: hidden; }
   #theme-rail-right { width: 0; overflow: hidden; }
-  #text-display { padding: var(--u5) var(--u3) var(--u10) var(--u3); font-size: 17px; }
+  #text-display { width: 100%; padding: var(--u5) var(--u3) var(--u10) var(--u3); font-size: 17px; }
   #reading-title { left: 12px; }
   #icons-bar { bottom: 16px; left: 16px; gap: 16px; }
 
@@ -2362,6 +2361,53 @@ body.capture-rendering .margin-icon-btn {
   font-variation-settings: 'SRFF' 50, 'wght' 350 !important;
   font-style: normal !important;
   letter-spacing: -0.005em !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST — notification discrète, remplace les alert() natifs
+   ═══════════════════════════════════════════════════════ */
+.margin-toast {
+  position: fixed;
+  left: 50%; bottom: 32px;
+  transform: translateX(-50%) translateY(16px);
+  opacity: 0; pointer-events: none;
+  z-index: 600;
+  min-width: 280px; max-width: 440px;
+  background: rgba(253,252,249,0.9);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 0 0 1.5px rgba(12,12,10,0.15),
+              0 10px 32px -6px rgba(12,12,10,0.3);
+  border-top: 3px solid var(--yellow);
+  padding: 16px 18px 16px 20px;
+  display: flex; align-items: flex-start; gap: 14px;
+  transition: opacity .28s cubic-bezier(0.22,1,0.36,1),
+              transform .28s cubic-bezier(0.22,1,0.36,1);
+}
+.margin-toast.margin-toast-visible {
+  opacity: 1; pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.margin-toast.margin-toast-error { border-top-color: var(--accent); }
+.margin-toast-body {
+  flex: 1; white-space: pre-line;
+  font-family: var(--f-display); font-weight: 200;
+  font-size: 17px; letter-spacing: -0.01em; line-height: 1.35;
+  color: var(--ink);
+}
+.margin-toast-close {
+  flex-shrink: 0; margin-top: -2px;
+  font-family: var(--f-display); font-weight: 200;
+  font-size: 20px; line-height: 1;
+  color: var(--ink-2); cursor: pointer;
+  transition: color .15s;
+}
+.margin-toast-close:hover { color: var(--ink); }
+@media (max-width: 600px) {
+  .margin-toast {
+    left: 16px; right: 16px; max-width: none;
+    transform: translateY(16px);
+  }
+  .margin-toast.margin-toast-visible { transform: translateY(0); }
 }
 
 /* ═══════════════════════════════════════════════════════
