@@ -636,6 +636,46 @@ function _findMultiSegmentSpanIds(passage, occurrenceCounter, structs) {
 
 // ── SETUP ──
 
+// ── TOAST — notification non-bloquante (post-it discret en bas de l'écran),
+//   remplace les alert() natifs pour les retours d'import/export : un
+//   alert() bloque l'interface entière et tranche avec l'esthétique du
+//   reste de l'outil, pour un message qui n'a rien d'une urgence. ──
+var _toastTimer = null;
+function showToast(message, opts) {
+  opts = opts || {};
+  var el = document.getElementById('margin-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'margin-toast';
+    el.className = 'margin-toast';
+    var body = document.createElement('div');
+    body.className = 'margin-toast-body';
+    var close = document.createElement('div');
+    close.className = 'margin-toast-close';
+    close.textContent = '\u00d7';
+    close.setAttribute('aria-label', 'fermer');
+    close.onclick = function() { hideToast(); };
+    el.appendChild(body);
+    el.appendChild(close);
+    document.body.appendChild(el);
+  }
+  el.querySelector('.margin-toast-body').textContent = message;
+  el.classList.toggle('margin-toast-error', !!opts.error);
+  // Forcer un reflow avant d'ajouter la classe visible si le toast était
+  // déjà affiché juste avant (re-déclenche proprement la transition).
+  el.classList.remove('margin-toast-visible');
+  void el.offsetWidth;
+  el.classList.add('margin-toast-visible');
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+  var duration = opts.duration !== undefined ? opts.duration : 4200;
+  if (duration > 0) _toastTimer = setTimeout(hideToast, duration);
+}
+function hideToast() {
+  var el = document.getElementById('margin-toast');
+  if (el) el.classList.remove('margin-toast-visible');
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+}
+
 var _pendingJsonData = null;
 
 function handleJsonImport(input) {
@@ -732,15 +772,25 @@ function injectJsonAnnotations() {
   });
 
   // ── Restaurer les pensées flottantes ──
+  // On réutilise l'ancre mot-à-mot (anchorId) si elle existe et que le mot
+  // correspondant existe bien dans CE document : la position se recalcule
+  // alors exactement contre ce mot, comme pour une pensée jamais déplacée.
+  // Le y brut (pixels absolus au moment de l'export) n'est gardé qu'en
+  // secours pour les anciens fichiers sans anchorId, ou si le document a
+  // changé entre-temps — il sert alors de point de départ à la recherche
+  // du mot le plus proche, mais peut diverger si la mise en page diffère.
   if (data.floatingThoughts && data.floatingThoughts.length) {
     data.floatingThoughts.forEach(function(t) {
+      var validAnchor = t.anchorId && wordById[t.anchorId] ? t.anchorId : undefined;
       floatingThoughts.push({
         id: 'ft' + Date.now() + Math.random(),
         text: t.text || '',
         posture: t.posture !== undefined ? parseInt(t.posture) : 50,
         dialogue: !!(t.dialogue),
         profile: t.profile !== undefined ? parseInt(t.profile) : 0,
-        y: t.y || 0
+        y: t.y || 0,
+        anchorId: validAnchor,
+        anchorOffset: validAnchor ? (t.anchorOffset || 0) : undefined
       });
     });
   }
@@ -953,6 +1003,11 @@ function renderLiveMarginNotes() {
   // déjà pour les notes — sinon rien n'empêchait deux pensées/notes
   // proches de s'afficher l'une sur l'autre.
   floatingThoughts.forEach(function(t) {
+    // Mêmes filtres que pour les notes d'annotation (profil / posture /
+    // trace) — jusqu'ici les pensées flottantes n'étaient jamais filtrées
+    // du tout et s'affichaient donc dans la marge quel que soit le filtre
+    // actif (ex. analytique/personnel), y compris les dialogues.
+    if ((activeProfiles.length > 0 && activeProfiles.indexOf(parseInt(t.profile)) < 0) || !_postureMatchThought(t) || !_traceMatchThought(t)) return;
     // Ancrage au mot le plus proche — une pensée flottante n'avait
     // jusqu'ici qu'un y en pixels absolus figé à la création, sans aucun
     // lien avec le texte. Dès que la page reflow (resize, import, note
@@ -3307,7 +3362,7 @@ function handleJsonImportLive(input) {
   r.onload = function(e) {
     try {
       var data = JSON.parse(e.target.result);
-      if (!data.annotations) { alert('Fichier JSON invalide'); return; }
+      if (!data.annotations) { showToast('Fichier JSON invalide.', { error: true }); return; }
 
       if (data.themes && Array.isArray(data.themes)) {
         var themeIdMap = {};
@@ -3363,10 +3418,13 @@ function handleJsonImportLive(input) {
 
       if (data.floatingThoughts) {
         data.floatingThoughts.forEach(function(t) {
+          var validAnchor = t.anchorId && wordById[t.anchorId] ? t.anchorId : undefined;
           floatingThoughts.push({
             id: 'ft' + Date.now() + Math.random(), text: t.text || '',
             posture: t.posture !== undefined ? parseInt(t.posture) : 50,
-            dialogue: !!(t.dialogue), profile: currentProfile, y: t.y || 0
+            dialogue: !!(t.dialogue), profile: currentProfile, y: t.y || 0,
+            anchorId: validAnchor,
+            anchorOffset: validAnchor ? (t.anchorOffset || 0) : undefined
           });
         });
       }
@@ -3379,8 +3437,8 @@ function handleJsonImportLive(input) {
       if (unmatched > 0) {
         liveMsg += '\n' + unmatched + ' passage(s) introuvable(s) dans ce texte ont été ignorés.';
       }
-      alert(liveMsg);
-    } catch(err) { alert('Erreur: ' + err.message); }
+      showToast(liveMsg, { error: unmatched > 0, duration: unmatched > 0 ? 0 : 4200 });
+    } catch(err) { showToast('Erreur d\'import\u00a0: ' + err.message, { error: true }); }
   };
   r.readAsText(f, 'UTF-8');
 }
@@ -3407,7 +3465,8 @@ function exportAnnotationsJSON() {
       return parseInt(t.profile||0) === profileIdx;
     }).map(function(t) {
       return { text: t.text, posture: t.posture||50, dialogue: !!(t.dialogue),
-               profile: parseInt(t.profile||0), y: t.y||0 };
+               profile: parseInt(t.profile||0), y: t.y||0,
+               anchorId: t.anchorId || null, anchorOffset: t.anchorOffset || 0 };
     })
   };
   var blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
@@ -4608,6 +4667,9 @@ function buildMenuPostit() {
 function _postureMatch(a) {
   if (!activePostureFilter) return true;
   if (activePostureFilter === 'dialogue') return !!(a.dialogue && a.note && a.note.trim());
+  // Dialogue a son propre filtre : on l'exclut d'analytique/personnel
+  // même si sa posture vaut 100 (forcée à la création).
+  if (a.dialogue) return false;
   var p = (a.posture != null ? a.posture : 50);
   if (activePostureFilter === 'analytique') return p < 40;
   if (activePostureFilter === 'personnel')  return p > 60;
@@ -4619,6 +4681,25 @@ function _traceMatch(a) {
   if (activeTraceFilter === 'crochet')  return a.trace === 'crochet';
   // Pour les autres traces, filtrer par trace indépendamment du flag dialogue
   return a.trace === activeTraceFilter;
+}
+function _postureMatchThought(t) {
+  if (!activePostureFilter) return true;
+  if (activePostureFilter === 'dialogue') return !!(t.dialogue && t.text && t.text.trim());
+  // Dialogue a son propre filtre : on l'exclut d'analytique/personnel
+  // même si sa posture vaut 100 (forcée à la création).
+  if (t.dialogue) return false;
+  var p = (t.posture != null ? t.posture : 50);
+  if (activePostureFilter === 'analytique') return p < 40;
+  if (activePostureFilter === 'personnel')  return p > 60;
+  return true;
+}
+function _traceMatchThought(t) {
+  if (!activeTraceFilter) return true;
+  if (activeTraceFilter === 'dialogue') return !!(t.dialogue && t.text && t.text.trim());
+  // Une pensée flottante n'a pas de trace (soulignement / surlignement /
+  // entouré / crochet) : ce n'est pas une marque posée sur une sélection
+  // de texte. Un filtre de trace précis ne doit donc jamais en montrer.
+  return false;
 }
 
 // ── PANNEAU LISTE ANNOTATIONS ──
@@ -5386,7 +5467,8 @@ function exportAnnotationsJSONQuick() {
       floatingThoughts: filteredThoughts.map(function(t) {
         var gp = parseInt(t.profile || 0);
         return { text: t.text, posture: t.posture != null ? t.posture : 50, dialogue: !!(t.dialogue),
-                 profile: globalToLocal[gp] !== undefined ? globalToLocal[gp] : 0, y: t.y || 0 };
+                 profile: globalToLocal[gp] !== undefined ? globalToLocal[gp] : 0, y: t.y || 0,
+                 anchorId: t.anchorId || null, anchorOffset: t.anchorOffset || 0 };
       })
     };
     var suffix = (profileIdxSet && profileIdxSet.length === 1)
@@ -6066,6 +6148,8 @@ window.toggleFiltrePostit        = toggleFiltrePostit;
 window.toggleListePostit         = toggleListePostit;
 window.openThemesOverlay         = openThemesOverlay;
 window.handleJsonImportLive      = handleJsonImportLive;
+window.showToast                 = showToast;
+window.hideToast                 = hideToast;
 window.exportAnnotationsJSONQuick= exportAnnotationsJSONQuick;
 // exportEdition est déjà globale via sa déclaration function — pas de réassignation ici
 window.toggleDimUnannotated      = toggleDimUnannotated;
